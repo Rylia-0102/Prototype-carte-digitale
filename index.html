@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Le Bistrot Rylia - Carte Digitale</title>
+    <style>
+        /* --- CHARTE GRAPHIQUE RYLIA --- */
+        :root {
+            --primary-orange: #FF6B00;
+            --dark-orange: #E56000;
+            --text-dark: #1a1a1a;
+            --text-grey: #666;
+            --bg-light: #f8f9fa;
+            --white: #ffffff;
+            --shadow: 0 8px 25px rgba(0,0,0,0.06); 
+            --danger-red: #ff4d4d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding-bottom: 80px; 
+            min-height: 100vh;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background: var(--white);
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .restaurant-name { font-size: 1.5rem; font-weight: 800; color: var(--primary-orange); letter-spacing: -0.5px; }
+        .restaurant-slogan { font-size: 0.85rem; color: var(--text-grey); font-style: italic; margin-top: 2px;}
+
+        /* --- FILTRES --- */
+        .filters-wrapper {
+            background: var(--white);
+            padding: 20px 0 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .filter-group { margin-bottom: 20px; text-align: center; }
+
+        .filter-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .scroll-container {
+            display: flex;
+            justify-content: flex-start;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 0 20px 5px 20px;
+            scrollbar-width: none; 
+        }
+        .scroll-container::-webkit-scrollbar { display: none; }
+
+        /* BOUTONS ENVIES */
+        .btn-envie {
+            flex-shrink: 0;
+            padding: 10px 18px;
+            background: var(--bg-light);
+            border: 1px solid #eee;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-envie.active {
+            background: var(--primary-orange);
+            color: white;
+            border-color: var(--primary-orange);
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* BOUTONS ALLERGÈNES */
+        .btn-allergy {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-grey);
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .btn-allergy.active {
+            background: #fff5f5;
+            color: var(--danger-red);
+            border-color: #ffcccc;
+            font-weight: 600;
+        }
+        .btn-allergy.active::before { content: "🚫 "; }
+
+        /* --- NAVIGATION CATÉGORIES (ONGLETS) --- */
+        .categories-nav {
+            display: flex;
+            justify-content: space-around;
+            background: var(--white);
+            padding: 0; 
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border-radius: 0 0 15px 15px;
+        }
+        
+        .cat-btn {
+            flex: 1; 
+            text-align: center;
+            background: none;
+            border: none;
+            padding: 18px 0;
+            font-family: inherit;
+            color: #999;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .cat-btn.active { 
+            color: var(--primary-orange); 
+        }
+        
+        .cat-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 4px;
+            background: var(--primary-orange);
+            border-radius: 4px 4px 0 0;
+        }
+
+        /* --- CARTE --- */
+        .menu-section { 
+            padding: 25px 20px 0 20px; 
+            display: none; 
+            animation: fadeIn 0.4s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .menu-section.active-section { display: block; }
+
+        .dish-card {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        
+        .dish-card:active { transform: scale(0.98); }
+
+        .dish-image {
+            width: 100%;
+            height: 240px; 
+            object-fit: cover;
+            background-color: #eee;
+        }
+
+        .dish-content { padding: 20px; }
+
+        .dish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .dish-name { font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+        .dish-price { font-weight: 800; color: var(--primary-orange); font-size: 1.2rem; white-space: nowrap;}
+        .dish-desc { font-size: 0.95rem; color: var(--text-grey); margin-bottom: 15px; line-height: 1.5; }
+
+        .dish-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f8f8f8;
+        }
+
+        .tag { font-size: 0.75rem; padding: 5px 10px; border-radius: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        .tag.vege { background: #e8f5e9; color: #2e7d32; }
+        .tag.epice { background: #ffebee; color: #c62828; }
+        .tag.sucre-sale { background: #fff8e1; color: #f9a825; }
+        .tag.viande { background: #3e2723; color: #fff; }
+
+        .allergen-info {
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-left: auto;
+            font-style: italic;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-grey);
+            display: none;
+        }
+        
+        .no-results h3 { margin-bottom: 10px; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="restaurant-name">Le Bistrot Rylia</div>
+        <div class="restaurant-slogan">Carte Interactive</div>
+    </header>
+
+    <div class="filters-wrapper">
+        
+        <div class="filter-group">
+            <div class="filter-title">✨ Mes Envies</div>
+            <div class="scroll-container">
+                <button class="btn-envie" onclick="toggleEnvie('poulet', this)">🍗 Poulet</button>
+                <button class="btn-envie" onclick="toggleEnvie('boeuf', this)">🥩 Bœuf</button>
+                <button class="btn-envie" onclick="toggleEnvie('vege', this)">🌱 Végétarien</button>
+                <button class="btn-envie" onclick="toggleEnvie('epice', this)">🌶️ Épicé</button>
+                <button class="btn-envie" onclick="toggleEnvie('sucre-sale', this)">🍯 Sucré-Salé</button>
+            </div>
+        </div>
+
+        <div class="filter-group" style="margin-bottom: 5px;">
+            <div class="filter-title" style="color:var(--danger-red);">⚠️ Mes Allergies</div>
+            <div class="scroll-container">
+                <button class="btn-allergy" onclick="toggleAllergie('gluten', this)">Gluten</button>
+                <button class="btn-allergy" onclick="toggleAllergie('arachides', this)">Arachides</button>
+                <button class="btn-allergy" onclick="toggleAllergie('moutarde', this)">Moutarde</button>
+                <button class="btn-allergy" onclick="toggleAllergie('lait', this)">Lait</button>
+                <button class="btn-allergy" onclick="toggleAllergie('soja', this)">Soja</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="categories-nav">
+        <button class="cat-btn active" onclick="changeCategory('burgers', this)">Burgers</button>
+        <button class="cat-btn" onclick="changeCategory('pates', this)">Pâtes</button>
+        <button class="cat-btn" onclick="changeCategory('wraps', this)">Wraps</button>
+    </div>
+
+    <div id="burgers" class="menu-section active-section">
+        
+        <div class="dish-card" data-envies="boeuf" data-allergenes="gluten lait moutarde">
+            <img src="burgers/boeuf-bacon.jpg" class="dish-image" alt="Le Bœuf & Bacon">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Le Bœuf & Bacon</div>
+                    <div class="dish-price">11.00€</div>
+                </div>
+                <p class="dish-desc">Steak haché, cheddar fondant, bacon fumé, oignons caramélisés et sauce paprika sur pain brioché.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Bœuf</span> 
+                    <div class="allergen-info">Contient: Gluten, Lait, Moutarde</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="poulet epice" data-allergenes="gluten moutarde">
+            <img src="burgers/spicy-crunchy.jpg" class="dish-image" alt="Le Spicy Crunchy">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Le Spicy Crunchy</div>
+                    <div class="dish-price">10.50€</div>
+                </div>
+                <p class="dish-desc">Filet de poulet pané aux épices cajun, pickles de concombre, laitue iceberg et mayonnaise pimentée.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Poulet</span>
+                    <span class="tag epice">Épicé</span>
+                    <div class="allergen-info">Contient: Gluten, Moutarde</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="vege sucre-sale" data-allergenes="gluten lait">
+            <img src="burgers/halloumi-miel.jpg" class="dish-image" alt="L'Halloumi Miel">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">L'Halloumi Miel</div>
+                    <div class="dish-price">12.00€</div>
+                </div>
+                <p class="dish-desc">Fromage Halloumi grillé, confit de figues, noix torréfiées, roquette et sauce blanche au citron.</p>
+                <div class="dish-footer">
+                    <span class="tag vege">Végétarien</span>
+                    <span class="tag sucre-sale">Sucré-Salé</span>
+                    <div class="allergen-info">Contient: Gluten, Lait</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="boeuf" data-allergenes="gluten lait soja">
+            <img src="burgers/blue-master.jpg" class="dish-image" alt="Le Blue Master">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Le Blue Master</div>
+                    <div class="dish-price">11.50€</div>
+                </div>
+                <p class="dish-desc">Steak de bœuf, crème de fourme d'Ambert, champignons sautés à la sauce soja et oignons frits.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Bœuf</span>
+                    <div class="allergen-info">Contient: Gluten, Lait, Soja</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="pates" class="menu-section">
+        
+        <div class="dish-card" data-envies="vege" data-allergenes="gluten lait">
+            <img src="pates/truffle-champignon.jpg" class="dish-image" alt="Truffle & Champignons">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Truffle & Champignons</div>
+                    <div class="dish-price">13.00€</div>
+                </div>
+                <p class="dish-desc">Tagliatelles fraîches, crème de champignons, huile de truffe blanche et copeaux de parmesan.</p>
+                <div class="dish-footer">
+                    <span class="tag vege">Végétarien</span>
+                    <div class="allergen-info">Contient: Gluten, Lait</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="boeuf epice" data-allergenes="gluten">
+            <img src="pates/arrabbiata-diabolo.jpg" class="dish-image" alt="Arrabbiata Diabolo">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Arrabbiata Diabolo</div>
+                    <div class="dish-price">11.50€</div>
+                </div>
+                <p class="dish-desc">Penne rigate, sauce tomate mijotée au piment d'Espelette, boulettes de bœuf et basilic frais.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Bœuf</span>
+                    <span class="tag epice">Épicé</span>
+                    <div class="allergen-info">Contient: Gluten</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="poulet sucre-sale" data-allergenes="gluten soja arachides">
+            <img src="pates/pad-thaï-fusion.jpg" class="dish-image" alt="Pad Thaï Fusion">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Pad Thaï Fusion</div>
+                    <div class="dish-price">12.50€</div>
+                </div>
+                <p class="dish-desc">Nouilles de blé, émincé de poulet, cacahuètes pilées, sauce soja caramélisée et citron vert.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Poulet</span>
+                    <span class="tag sucre-sale">Sucré-Salé</span>
+                    <div class="allergen-info">Contient: Gluten, Soja, Arachides</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="vege" data-allergenes="gluten lait">
+            <img src="pates/pesto-burrata.jpg" class="dish-image" alt="Pesto & Burrata">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Pesto & Burrata</div>
+                    <div class="dish-price">14.00€</div>
+                </div>
+                <p class="dish-desc">Linguine au pesto verde maison, tomates cerises rôties et une boule de burrata crémeuse entière.</p>
+                <div class="dish-footer">
+                    <span class="tag vege">Végétarien</span>
+                    <div class="allergen-info">Contient: Gluten, Lait</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="wraps" class="menu-section">
+        
+        <div class="dish-card" data-envies="poulet" data-allergenes="gluten lait moutarde">
+            <img src="wraps/cesar-palace.jpg" class="dish-image" alt="Le César Palace">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Le César Palace</div>
+                    <div class="dish-price">8.50€</div>
+                </div>
+                <p class="dish-desc">Tortilla de blé, aiguillettes de poulet pané, parmesan, tomates et sauce césar onctueuse.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Poulet</span>
+                    <div class="allergen-info">Contient: Gluten, Lait, Moutarde</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="boeuf epice" data-allergenes="gluten">
+            <img src="wraps/mexicano-cili.jpg" class="dish-image" alt="Mexicano Chili">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Mexicano Chili</div>
+                    <div class="dish-price">9.00€</div>
+                </div>
+                <p class="dish-desc">Bœuf haché épicé, haricots rouges, maïs, poivrons marinés et salsa piquante.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Bœuf</span>
+                    <span class="tag epice">Épicé</span>
+                    <div class="allergen-info">Contient: Gluten</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="vege sucre-sale" data-allergenes="gluten lait">
+            <img src="wraps/chevre-miel.jpg" class="dish-image" alt="Chèvre & Miel">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Chèvre & Miel</div>
+                    <div class="dish-price">8.00€</div>
+                </div>
+                <p class="dish-desc">Fromage de chèvre frais, miel d'acacia, noix croquantes, épinards frais et raisins secs.</p>
+                <div class="dish-footer">
+                    <span class="tag vege">Végétarien</span>
+                    <span class="tag sucre-sale">Sucré-Salé</span>
+                    <div class="allergen-info">Contient: Gluten, Lait</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dish-card" data-envies="poulet sucre-sale" data-allergenes="gluten arachides soja">
+            <img src="wraps/satay-thai.jpg" class="dish-image" alt="Satay Thaï">
+            <div class="dish-content">
+                <div class="dish-header">
+                    <div class="dish-name">Satay Thaï</div>
+                    <div class="dish-price">9.50€</div>
+                </div>
+                <p class="dish-desc">Poulet mariné, carottes râpées, chou rouge, coriandre et sauce onctueuse cacahuète-coco.</p>
+                <div class="dish-footer">
+                    <span class="tag viande">Poulet</span>
+                    <div class="allergen-info">Contient: Gluten, Arachides, Soja</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="no-results" id="no-results-msg">
+        <h3>Aucun plat trouvé 😕</h3>
+        <p>Essayez de modifier vos filtres pour voir d'autres résultats.</p>
+        <button onclick="resetFilters()" style="margin-top:15px; color:var(--primary-orange); border:none; background:none; text-decoration:underline; font-weight:bold; font-size:1rem;">Effacer les filtres</button>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALES ---
+        let currentEnvies = [];
+        let currentAllergies = [];
+        let currentCategory = 'burgers'; 
+
+        // --- GESTION NAVIGATION ONGLETS ---
+        function changeCategory(catId, btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.menu-section').forEach(sec => sec.classList.remove('active-section'));
+            document.getElementById(catId).classList.add('active-section');
+            currentCategory = catId;
+            applyFilters();
+        }
+
+        // --- GESTION FILTRES ---
+        function toggleEnvie(val, btn) {
+            btn.classList.toggle('active');
+            if (currentEnvies.includes(val)) {
+                currentEnvies = currentEnvies.filter(item => item !== val);
+            } else {
+                currentEnvies.push(val);
+            }
+            applyFilters();
+        }
+
+        function toggleAllergie(val, btn) {
+            btn.classList.toggle('active');
+            if (currentAllergies.includes(val)) {
+                currentAllergies = currentAllergies.filter(item => item !== val);
+            } else {
+                currentAllergies.push(val);
+            }
+            applyFilters();
+        }
+
+        // --- MOTEUR DE FILTRAGE ---
+        function applyFilters() {
+            const activeContainer = document.getElementById(currentCategory);
+            const dishes = activeContainer.querySelectorAll('.dish-card');
+            
+            let visibleCount = 0;
+
+            dishes.forEach(dish => {
+                const platEnvies = dish.dataset.envies.split(' ');
+                const platAllergenes = dish.dataset.allergenes.split(' ');
+                let show = true;
+
+                // 1. Vérif Envies (Inclusif)
+                if (currentEnvies.length > 0) {
+                    const aToutesLesEnvies = currentEnvies.every(envie => platEnvies.includes(envie));
+                    if (!aToutesLesEnvies) show = false;
+                }
+
+                // 2. Vérif Allergies (Exclusif)
+                if (currentAllergies.length > 0) {
+                    const contientAllergeneInterdit = currentAllergies.some(allergene => platAllergenes.includes(allergene));
+                    if (contientAllergeneInterdit) show = false;
+                }
+
+                if (show) {
+                    dish.style.display = "flex";
+                    visibleCount++;
+                } else {
+                    dish.style.display = "none";
+                }
+            });
+
+            // Gestion message vide
+            const msg = document.getElementById('no-results-msg');
+            if (visibleCount === 0) {
+                msg.style.display = "block";
+            } else {
+                msg.style.display = "none";
+            }
+        }
+
+        function resetFilters() {
+            currentEnvies = [];
+            currentAllergies = [];
+            document.querySelectorAll('.scroll-container button').forEach(b => b.classList.remove('active'));
+            applyFilters();
+        }
+    </script>
+</body>
+</html>
